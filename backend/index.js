@@ -1,29 +1,58 @@
 const express = require('express');
 const { Pool } = require('pg');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
-// Configuración de conexión flexible (local / Render)
+// Configuración de OpenAPI / Swagger
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API Proyecto Base',
+      version: '1.0.0',
+      description: 'Documentación interactiva de la API',
+    },
+    servers: [
+      {
+        url: '/',
+        description: 'Servidor base',
+      },
+    ],
+  },
+  apis: ['./index.js'],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Conexión a la base de datos
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 
-    `postgres://${process.env.DB_USER || 'app_user'}:${process.env.DB_PASSWORD || 'app_password'}@${process.env.DB_HOST || 'db'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'app_db'}`,
+  connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-app.get('/', (req, res) => {
-  res.json({ message: "API funcionando correctamente" });
-});
-
+/**
+ * @openapi
+ * /usuarios:
+ *   get:
+ *     summary: Obtiene la lista de usuarios
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios recuperada con éxito
+ */
 app.get('/usuarios', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM usuarios;');
+    const result = await pool.query('SELECT * FROM usuarios');
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: "Error conectando a la BD", detail: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor iniciado en el puerto ${PORT}`);
+app.listen(port, () => {
+  console.log(`Backend escuchando en el puerto ${port}`);
 });
