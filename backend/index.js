@@ -6,7 +6,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuración de OpenAPI / Swagger
+// 1. Configuración de Swagger / OpenAPI
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -22,16 +22,24 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./index.js'],
+  apis: ['./index.js'], // Archivo donde están los comentarios JSDoc
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+// 2. Middleware de Swagger UI (SIN opciones complejas ni rutas extra)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Conexión a la base de datos
+// Detecta si está en entorno de desarrollo local o producción
+const isProduction = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('render.com');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  host: process.env.DB_HOST || 'db',
+  user: process.env.DB_USER || 'app_user',
+  password: process.env.DB_PASSWORD || 'app_password',
+  database: process.env.DB_NAME || 'app_db',
+  port: 5432,
+  ssl: isProduction ? { rejectUnauthorized: false } : false
 });
 
 /**

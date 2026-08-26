@@ -6,9 +6,16 @@ services:
       DB_USER: app_user
       DB_PASSWORD: app_password
       DB_NAME: app_db
+      # Si en backend/index.js usas DATABASE_URL, déjala también por compatibilidad:
+      DATABASE_URL: postgres://app_user:app_password@db:5432/app_db
+    depends_on:
+      - db
+    networks:
+      - app-network
 
   db:
     image: postgres:16-alpine
+    container_name: db
     environment:
       POSTGRES_USER: app_user
       POSTGRES_PASSWORD: app_password
@@ -17,6 +24,8 @@ services:
       - "5432:5432"
     volumes:
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
 
   proxy:
     build: ./nginx
@@ -24,3 +33,9 @@ services:
       - "8080:80"
     depends_on:
       - app
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
