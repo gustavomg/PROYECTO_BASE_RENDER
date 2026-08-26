@@ -1,0 +1,26 @@
+services:
+  app:
+    build: ./backend
+    environment:
+      DB_HOST: db
+      DB_USER: app_user
+      DB_PASSWORD: app_password
+      DB_NAME: app_db
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  proxy:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - app

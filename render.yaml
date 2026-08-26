@@ -1,0 +1,26 @@
+services:
+  # 1. API Backend (Servicio Web)
+  - type: web
+    name: app
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: app-db
+          property: connectionString
+
+  # 2. Reverse Proxy Nginx
+  - type: web
+    name: proxy
+    env: docker
+    dockerfilePath: ./nginx/Dockerfile
+    dockerContext: ./nginx
+
+databases:
+  # 3. Base de datos PostgreSQL
+  - name: app-db
+    databaseName: app_db
+    user: app_user
+    plan: free
